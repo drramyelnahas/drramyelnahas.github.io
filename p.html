@@ -17,7 +17,9 @@ span{color:#C5E2FF;font-size:14px}
 var PORTAL = "https://script.google.com/macros/s/AKfycbwAL79YahNm2U8uhCjWfXoyp6wJ9kQAnmlqWR7l8mlMnpw5dgZ2rJ2mNJQx05s0aPHm6w/exec";
 var code = decodeURIComponent(location.hash.replace(/^#/, ""));
 var key = code.split("-").pop();
-if (key && key.length >= 10) {
+if (code.indexOf("team-") === 0 && key.length >= 20) {
+  location.replace(PORTAL + "?s=" + encodeURIComponent(key));
+} else if (key && key.length >= 10) {
   location.replace(PORTAL + "?k=" + encodeURIComponent(key));
 } else {
   document.getElementById("msg").textContent = "This link is not complete. Please contact the centre.";
