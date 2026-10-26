@@ -2,28 +2,103 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Dr. Ramy El Nahas</title>
+<title>Dr. Ramy</title>
+<meta name="theme-color" content="#00147C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dr. Ramy">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
 <style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#00147C;color:#fff;font-family:"Segoe UI",Arial,sans-serif;text-align:center}
-b{display:block;font-size:20px;margin-bottom:6px}
-span{color:#C5E2FF;font-size:14px}
+html,body{margin:0;height:100%;background:#00147C;font-family:"Segoe UI",Tahoma,Arial,sans-serif}
+#msg{position:fixed;inset:0;display:grid;place-items:center;color:#fff;text-align:center}
+#msg b{display:block;font-size:20px;margin-bottom:6px}
+#msg span{color:#C5E2FF;font-size:14px}
+#fr{position:fixed;inset:0;width:100%;height:100%;border:0;background:#F3FAFF;display:none;padding-top:env(safe-area-inset-top)}
+#bar{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:9;display:none;
+  background:#00147C;color:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.3);font-size:14px}
+#bar .t{display:flex;align-items:center;gap:10px}
+#bar img{width:38px;height:38px;border-radius:9px;background:#fff;flex-shrink:0}
+#bar .t div{flex:1}
+#bar .t b{display:block}
+#bar small{color:#C5E2FF;display:block}
+#bar button{border:0;border-radius:20px;padding:7px 12px;font-weight:700;font-family:inherit;cursor:pointer;font-size:13px}
+.go{background:#00FFA2;color:#00147C}
+.no{background:transparent;color:#C5E2FF}
+#how{display:none;margin-top:10px;background:rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;line-height:1.7}
+.ar{direction:rtl;text-align:right}
+#slow{position:fixed;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom));text-align:center;display:none;z-index:8}
+#slow a{color:#00147C;background:#C5E2FF;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;text-decoration:none}
 </style>
 </head>
 <body>
-<div><b>Dr. Ramy El Nahas</b><span id="msg">Opening your page...</span></div>
+<div id="msg"><div><b>Dr. Ramy El Nahas</b><span id="txt">Opening your page...</span></div></div>
+<iframe id="fr" title="Dr. Ramy El Nahas" allow="clipboard-write"></iframe>
+<div id="slow"><a id="slowa" href="#" target="_blank" rel="noopener">Page not opening? Tap here</a></div>
+<div id="bar">
+  <div class="t"><img src="icon-192.png" alt="">
+    <div><b>Add to your home screen</b><small class="ar">ضيف الصفحة على الشاشة الرئيسية</small></div>
+    <button class="go" id="add">Add</button><button class="no" id="later">Later</button></div>
+  <div id="how"></div>
+</div>
 <script>
 var PORTAL = "https://script.google.com/macros/s/AKfycbwAL79YahNm2U8uhCjWfXoyp6wJ9kQAnmlqWR7l8mlMnpw5dgZ2rJ2mNJQx05s0aPHm6w/exec";
+var SAVE = "rn_code";
+function store(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+/* the link remembers the student, so the home screen icon opens the right page */
 var code = decodeURIComponent(location.hash.replace(/^#/, ""));
-var key = code.split("-").pop();
-if (code.indexOf("team-") === 0 && key.length >= 20) {
-  location.replace(PORTAL + "?s=" + encodeURIComponent(key));
-} else if (key && key.length >= 10) {
-  location.replace(PORTAL + "?k=" + encodeURIComponent(key));
+if (code) store(SAVE, code); else { code = read(SAVE) || ""; if (code) history.replaceState(null, "", "#" + code); }
+var key = code.split("-").pop(), url = "";
+if (code.indexOf("team-") === 0 && key.length >= 20) url = PORTAL + "?s=" + encodeURIComponent(key);
+else if (key && key.length >= 10) url = PORTAL + "?k=" + encodeURIComponent(key);
+
+if (!url) {
+  document.getElementById("txt").textContent = "This link is not complete. Please contact the centre.";
 } else {
-  document.getElementById("msg").textContent = "This link is not complete. Please contact the centre.";
+  var fr = document.getElementById("fr");
+  fr.onload = function () { fr.style.display = "block"; document.getElementById("msg").style.display = "none"; };
+  fr.src = url;
+  document.getElementById("slowa").href = url;
+  setTimeout(function () { if (fr.style.display !== "block") document.getElementById("slow").style.display = "block"; }, 9000);
+  setTimeout(showBar, 4000);
 }
+
+/* add to home screen */
+var deferred = null;
+window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; });
+function standalone() {
+  return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+}
+function showBar() {
+  if (standalone()) return;
+  var later = +(read("rn_later") || 0);
+  if (later && Date.now() - later < 7 * 864e5) return;
+  document.getElementById("bar").style.display = "block";
+}
+document.getElementById("later").onclick = function () {
+  store("rn_later", String(Date.now())); document.getElementById("bar").style.display = "none";
+};
+document.getElementById("add").onclick = function () {
+  if (deferred) {
+    deferred.prompt();
+    deferred.userChoice.then(function () { deferred = null; document.getElementById("bar").style.display = "none"; });
+    return;
+  }
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var h = document.getElementById("how");
+  h.innerHTML = ios
+    ? '<div>1. Tap the Share button <b>&#x2B06;&#xFE0E;</b> at the bottom of Safari.</div><div>2. Tap <b>Add to Home Screen</b>, then <b>Add</b>.</div>' +
+      '<div class="ar">١. دوس على زرار المشاركة <b>&#x2B06;&#xFE0E;</b> تحت في Safari.</div><div class="ar">٢. اختار <b>Add to Home Screen</b> وبعدين <b>Add</b>.</div>'
+    : '<div>1. Tap the menu <b>&#8942;</b> at the top of Chrome.</div><div>2. Tap <b>Add to Home screen</b> or <b>Install app</b>.</div>' +
+      '<div class="ar">١. دوس على القايمة <b>&#8942;</b> فوق في Chrome.</div><div class="ar">٢. اختار <b>Add to Home screen</b> أو <b>Install app</b>.</div>';
+  h.style.display = h.style.display === "block" ? "none" : "block";
+};
 </script>
 </body>
 </html>
